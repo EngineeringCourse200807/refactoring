@@ -7,7 +7,10 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BudgetTest {
 
@@ -76,6 +79,17 @@ public class BudgetTest {
     public void yt() {
         int query = new BudgetService(new InnBudget()).query(LocalDate.of(2020, Month.MAY, 10), LocalDate.of(2020, Month.JULY, 10));
         assertEquals(230, query);
+    }
+
+    @Test
+    public void three_years() {
+        BudgetRepo stubBudgetRepo = mock(BudgetRepo.class);
+        BudgetService budgetService = new BudgetService(stubBudgetRepo);
+        when(stubBudgetRepo.findAll()).thenReturn(asList(new Budget(LocalDate.of(2020, Month.MAY, 1), 310), new Budget(LocalDate.of(2021, Month.MAY, 1), 310), new Budget(LocalDate.of(2022, Month.MAY, 1), 310)));
+
+        int actual = budgetService.query(LocalDate.of(2020, Month.MAY, 10), LocalDate.of(2022, Month.MAY, 10));
+
+        assertEquals(220 + 310 + 100, actual);
     }
 
 
