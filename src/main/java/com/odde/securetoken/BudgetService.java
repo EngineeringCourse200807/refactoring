@@ -40,7 +40,8 @@ public class BudgetService {
         //同一个月的数据
         List<Budget> all = repo.findAll();
         if (period.isSameMonth()) {
-            return getBudgetOfPeriod(period.getStartTime(), period.getEndTime(), all);
+            Budget budget = findBudget(period.getStartTime(), all);
+            return budget.getDailyAmount() * period.getDayCount();
         }
         //不是同一个月的 但是是同一年的
         LocalDate startTime = period.getStartTime();
@@ -48,11 +49,14 @@ public class BudgetService {
         int total = 0;
         for (LocalDate current = startTime; current.isBefore(endTime) || current.isEqual(endTime); current = current.plusMonths(1)) {
             if (new Period(current, startTime).isSameMonth()) {
-                total += getBudgetOfPeriod(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth()), all);
+                Budget budget = findBudget(startTime, all);
+                total += budget.getDailyAmount() * new Period(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth())).getDayCount();
             } else if (new Period(current, endTime).isSameMonth()) {
-                total += getBudgetOfPeriod(endTime.withDayOfMonth(1), endTime, all);
+                Budget budget = findBudget(endTime.withDayOfMonth(1), all);
+                total += budget.getDailyAmount() * new Period(endTime.withDayOfMonth(1), endTime).getDayCount();
             } else {
-                total += getBudgetOfPeriod(current.withDayOfMonth(1), current.withDayOfMonth(current.lengthOfMonth()), all);
+                Budget budget = findBudget(current.withDayOfMonth(1), all);
+                total += budget.getDailyAmount() * new Period(current.withDayOfMonth(1), current.withDayOfMonth(current.lengthOfMonth())).getDayCount();
             }
         }
         return total;
