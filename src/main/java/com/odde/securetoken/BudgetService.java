@@ -2,7 +2,10 @@ package com.odde.securetoken;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.YearMonth;
 import java.util.List;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 public class BudgetService {
 
@@ -13,20 +16,19 @@ public class BudgetService {
     }
 
     int query(LocalDate startTime, LocalDate endTime) {
-        List<Budget> all = repo.findAll();
         if (endTime.isBefore(startTime)) {
             return 0;
         }
         //同一个月的数据
-        if (startTime.getYear() == endTime.getYear() && startTime.getMonth() == endTime.getMonth()) {
-            int i = endTime.getDayOfMonth() - startTime.getDayOfMonth();
-            boolean anyMatch = all.stream().anyMatch(x -> startTime.getYear() == x.getDate().getYear() && startTime.getMonth() == x.getDate().getMonth());
-            if (!anyMatch) {
+        List<Budget> all = repo.findAll();
+        if (isSameMonth(startTime, endTime)) {
+            boolean noneMatch = all.stream().noneMatch(x -> isSameMonth(startTime, x.getDate()));
+            if (noneMatch) {
                 return 0;
             }
-            Budget budget = all.stream().filter(x -> startTime.getYear() == x.getDate().getYear() && startTime.getMonth() == x.getDate().getMonth()).findFirst().get();
-            int average = budget.getAmount() / budget.getDate().lengthOfMonth();
-            return average * (endTime.getDayOfMonth() - startTime.getDayOfMonth() + 1);
+            Budget budget = all.stream().filter(x -> isSameMonth(startTime, x.getDate())).findFirst().get();
+            int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
+            return dailyAmount * ((int) DAYS.between(startTime, endTime) + 1);
         }
         //不是同一个月的 但是是同一年的
         int budget = 0;
@@ -76,9 +78,9 @@ public class BudgetService {
     }
 
     private int getSignalBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
-        boolean anyMatch = budgets.stream().anyMatch(x -> date.getYear() == x.getDate().getYear() && date.getMonth() == x.getDate().getMonth());
+        boolean anyMatch = budgets.stream().anyMatch(x -> isSameMonth(date, x.getDate()));
         if (anyMatch) {
-            Budget budget = budgets.stream().filter(x -> date.getYear() == x.getDate().getYear() && date.getMonth() == x.getDate().getMonth()).findFirst().get();
+            Budget budget = budgets.stream().filter(x -> isSameMonth(date, x.getDate())).findFirst().get();
             int dayOfMonth = budget.getDate().getDayOfMonth();
             int length = budget.getDate().lengthOfMonth();
             int i = budget.getAmount() / length;
@@ -92,5 +94,9 @@ public class BudgetService {
             }
         }
         return 0;
+    }
+
+    private boolean isSameMonth(LocalDate startTime, LocalDate endTime) {
+        return YearMonth.from(startTime).equals(YearMonth.from(endTime));
     }
 }
