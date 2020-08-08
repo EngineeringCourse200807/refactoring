@@ -9,11 +9,12 @@ public class Budget {
 
     private int amount;
 
-    public Budget(LocalDate date,int amount) {
+    public Budget(LocalDate date, int amount) {
         this.date = date;
-        this.amount=amount;
+        this.amount = amount;
     }
-    Budget(){
+
+    Budget() {
 
     }
 
@@ -31,5 +32,9 @@ public class Budget {
 
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+
+    public int getDailyAmount() {
+        return amount / date.lengthOfMonth();
     }
 }
