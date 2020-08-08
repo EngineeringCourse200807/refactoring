@@ -77,16 +77,11 @@ public class BudgetService {
         boolean anyMatch = budgets.stream().anyMatch(x -> isSameMonth(date, x.getDate()));
         if (anyMatch) {
             Budget budget = budgets.stream().filter(x -> isSameMonth(date, x.getDate())).findFirst().get();
-            int dayOfMonth = budget.getDate().getDayOfMonth();
-            int length = budget.getDate().lengthOfMonth();
-            int i = budget.getAmount() / length;
-            int day = date.getDayOfMonth();
+            int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
             if (endMonth) {
-
-                return i * day;
+                return dailyAmount * ((int) DAYS.between(date.withDayOfMonth(1), date) + 1);
             } else {
-                return i * (length - day + 1);
-
+                return dailyAmount * ((int) DAYS.between(date, date.withDayOfMonth(date.lengthOfMonth())) + 1);
             }
         }
         return 0;
