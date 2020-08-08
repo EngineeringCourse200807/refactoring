@@ -21,7 +21,8 @@ public class BudgetService {
         return queryBudget(new Period(startTime, endTime));
     }
 
-    private int calBudgetMonth(LocalDate startTime, LocalDate endTime, List<Budget> all, int total) {
+    private int calBudgetMonth(LocalDate startTime, LocalDate endTime, List<Budget> all) {
+        int total = 0;
         if (startTime.getYear() == endTime.getYear()) {
             for (LocalDate current = startTime; current.isBefore(endTime) || current.isEqual(endTime); current = current.plusMonths(1)) {
                 if (current.getMonthValue() == startTime.getMonthValue()) {
@@ -63,22 +64,21 @@ public class BudgetService {
             return getBudgetOfPeriod(period.getStartTime(), period.getEndTime(), all);
         }
         //不是同一个月的 但是是同一年的
-        int budget = calBudgetMonth(period.getStartTime(), period.getEndTime(), all, 0);
-        if (budget != 0) {
-            return budget;
+        int total = calBudgetMonth(period.getStartTime(), period.getEndTime(), all);
+        if (total != 0) {
+            return total;
         }
         //不同年份的
         for (int i = period.getStartTime().getYear(); i < period.getEndTime().getYear() + 1; i++) {
-            int amount = 0;
             if (i == period.getStartTime().getYear()) {
-                budget += calBudgetMonth(period.getStartTime(), endOfYear(period.getStartTime().getYear()), all, amount);
+                total += calBudgetMonth(period.getStartTime(), endOfYear(period.getStartTime().getYear()), all);
             } else if (i == period.getEndTime().getYear()) {
-                budget += calBudgetMonth(startOfYear(period.getEndTime().getYear()), period.getEndTime(), all, amount);
+                total += calBudgetMonth(startOfYear(period.getEndTime().getYear()), period.getEndTime(), all);
             } else {
-                budget += calBudgetMonth(startOfYear(i), endOfYear(i), all, amount);
+                total += calBudgetMonth(startOfYear(i), endOfYear(i), all);
             }
         }
-        return budget;
+        return total;
     }
 
     private LocalDate startOfYear(int year) {
