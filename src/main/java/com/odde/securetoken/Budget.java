@@ -18,31 +18,23 @@ public class Budget {
 
     }
 
-    public LocalDate getDate() {
-        return date;
-    }
-
     public void setDate(LocalDate date) {
         this.date = date;
-    }
-
-    public int getAmount() {
-        return amount;
     }
 
     public void setAmount(int amount) {
         this.amount = amount;
     }
 
-    public int getDailyAmount() {
+    public int getOverlappingAmount(Period period) {
+        return getDailyAmount() * period.getOverlappingDayCount(getPeriod());
+    }
+
+    private int getDailyAmount() {
         return amount / date.lengthOfMonth();
     }
 
-    public Period getPeriod() {
+    private Period getPeriod() {
         return new Period(date, date.withDayOfMonth(date.lengthOfMonth()));
-    }
-
-    public int getOverlappingAmount(Period period) {
-        return getDailyAmount() * period.getOverlappingDayCount(getPeriod());
     }
 }

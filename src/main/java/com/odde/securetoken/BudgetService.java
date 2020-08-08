@@ -14,12 +14,8 @@ public class BudgetService {
         if (endTime.isBefore(startTime)) {
             return 0;
         }
-        return queryBudget(new Period(startTime, endTime));
-    }
-
-    private int queryBudget(Period period) {
         return repo.findAll().stream().
-                mapToInt(budget -> budget.getOverlappingAmount(period)).
+                mapToInt(budget -> budget.getOverlappingAmount(new Period(startTime, endTime))).
                 sum();
     }
 
