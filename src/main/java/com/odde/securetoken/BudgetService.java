@@ -45,24 +45,27 @@ public class BudgetService {
         return budget;
     }
 
-    private int calBudgetMonth(LocalDate startTime, LocalDate endTime, List<Budget> all, int budget) {
+    private int calBudgetMonth(LocalDate startTime, LocalDate endTime, List<Budget> all, int total) {
         if (startTime.getYear() == endTime.getYear()) {
             for (int i = startTime.getMonth().getValue(); i < endTime.getMonth().getValue() + 1; i++) {
                 LocalDate date;
                 if (i == startTime.getMonthValue()) {
-                    date = startTime;
+                    Budget budget = findBudget(startTime, all);
+                    int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
+                    total += dailyAmount * ((int) DAYS.between(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth())) + 1);
                 } else if (i == endTime.getMonthValue()) {
-                    int signalBudget = getSingleBudget(endTime, all, true);
-                    budget += signalBudget;
-                    continue;
+                    Budget budget = findBudget(endTime, all);
+                    int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
+                    total += dailyAmount * ((int) DAYS.between(endTime.withDayOfMonth(1), endTime) + 1);
                 } else {
                     date = LocalDate.of(startTime.getYear(), Month.of(i), 1);
+                    Budget budget = findBudget(date, all);
+                    int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
+                    total += dailyAmount * ((int) DAYS.between(date, date.withDayOfMonth(date.lengthOfMonth())) + 1);
                 }
-                int signalBudget = getSingleBudget(date, all, false);
-                budget += signalBudget;
             }
         }
-        return budget;
+        return total;
     }
 
     private LocalDate endOfYear(int year) {
@@ -78,16 +81,6 @@ public class BudgetService {
             return budget;
         }
         return all.stream().filter(x -> isSameMonth(startTime, x.getDate())).findFirst().get();
-    }
-
-    private int getSingleBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
-        Budget budget = findBudget(date, budgets);
-        int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-        if (endMonth) {
-            return dailyAmount * ((int) DAYS.between(date.withDayOfMonth(1), date) + 1);
-        } else {
-            return dailyAmount * ((int) DAYS.between(date, date.withDayOfMonth(date.lengthOfMonth())) + 1);
-        }
     }
 
     private boolean isSameMonth(LocalDate startTime, LocalDate endTime) {
