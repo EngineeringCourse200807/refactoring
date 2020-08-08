@@ -50,13 +50,13 @@ public class BudgetService {
         for (LocalDate current = startTime; current.isBefore(endTime) || current.isEqual(endTime); current = current.plusMonths(1)) {
             if (new Period(current, startTime).isSameMonth()) {
                 Budget budget = findBudget(startTime, all);
-                total += budget.getDailyAmount() * new Period(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth())).getDayCount();
+                total += budget.getDailyAmount() * new Period(period.getStartTime(), budget.getPeriod().getEndTime()).getDayCount();
             } else if (new Period(current, endTime).isSameMonth()) {
                 Budget budget = findBudget(endTime.withDayOfMonth(1), all);
-                total += budget.getDailyAmount() * new Period(endTime.withDayOfMonth(1), endTime).getDayCount();
+                total += budget.getDailyAmount() * new Period(budget.getPeriod().getStartTime(), period.getEndTime()).getDayCount();
             } else {
                 Budget budget = findBudget(current.withDayOfMonth(1), all);
-                total += budget.getDailyAmount() * new Period(current.withDayOfMonth(1), current.withDayOfMonth(current.lengthOfMonth())).getDayCount();
+                total += budget.getDailyAmount() * budget.getPeriod().getDayCount();
             }
         }
         return total;

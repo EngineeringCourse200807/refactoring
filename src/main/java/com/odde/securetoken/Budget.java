@@ -37,4 +37,8 @@ public class Budget {
     public int getDailyAmount() {
         return amount / date.lengthOfMonth();
     }
+
+    public Period getPeriod() {
+        return new Period(date, date.withDayOfMonth(date.lengthOfMonth()));
+    }
 }
