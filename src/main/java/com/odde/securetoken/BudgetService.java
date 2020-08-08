@@ -47,21 +47,19 @@ public class BudgetService {
 
     private int calBudgetMonth(LocalDate startTime, LocalDate endTime, List<Budget> all, int total) {
         if (startTime.getYear() == endTime.getYear()) {
-            for (int i = startTime.getMonth().getValue(); i < endTime.getMonth().getValue() + 1; i++) {
-                LocalDate date;
-                if (i == startTime.getMonthValue()) {
+            for (LocalDate current = startTime; current.isBefore(endTime) || current.isEqual(endTime); current = current.plusMonths(1)) {
+                if (current.getMonthValue() == startTime.getMonthValue()) {
                     Budget budget = findBudget(startTime, all);
                     int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
                     total += dailyAmount * ((int) DAYS.between(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth())) + 1);
-                } else if (i == endTime.getMonthValue()) {
+                } else if (current.getMonthValue() == endTime.getMonthValue()) {
                     Budget budget = findBudget(endTime, all);
                     int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
                     total += dailyAmount * ((int) DAYS.between(endTime.withDayOfMonth(1), endTime) + 1);
                 } else {
-                    date = LocalDate.of(startTime.getYear(), Month.of(i), 1);
-                    Budget budget = findBudget(date, all);
+                    Budget budget = findBudget(current.withDayOfMonth(1), all);
                     int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-                    total += dailyAmount * ((int) DAYS.between(date, date.withDayOfMonth(date.lengthOfMonth())) + 1);
+                    total += dailyAmount * ((int) DAYS.between(current.withDayOfMonth(1), current.withDayOfMonth(1).withDayOfMonth(current.withDayOfMonth(1).lengthOfMonth())) + 1);
                 }
             }
         }
