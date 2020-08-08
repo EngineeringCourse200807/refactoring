@@ -54,17 +54,15 @@ public class BudgetService {
             for (int i = startTime.getMonth().getValue(); i < endTime.getMonth().getValue() + 1; i++) {
                 LocalDate date;
                 if (i == startTime.getMonthValue()) {
-                    date = LocalDate.of(startTime.getYear(), Month.of(i), startTime.getDayOfMonth());
+                    date = startTime;
                 } else if (i == endTime.getMonthValue()) {
-                    date = LocalDate.of(startTime.getYear(), Month.of(i), endTime.getDayOfMonth());
-                    int signalBudget = getSignalBudget(date, all, true);
+                    int signalBudget = getSingleBudget(endTime, all, true);
                     budget += signalBudget;
                     continue;
                 } else {
                     date = LocalDate.of(startTime.getYear(), Month.of(i), 1);
-
                 }
-                int signalBudget = getSignalBudget(date, all, false);
+                int signalBudget = getSingleBudget(date, all, false);
                 budget += signalBudget;
             }
         }
@@ -75,7 +73,7 @@ public class BudgetService {
         return LocalDate.of(year, Month.DECEMBER, 31);
     }
 
-    private int getSignalBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
+    private int getSingleBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
         boolean anyMatch = budgets.stream().anyMatch(x -> isSameMonth(date, x.getDate()));
         if (anyMatch) {
             Budget budget = budgets.stream().filter(x -> isSameMonth(date, x.getDate())).findFirst().get();
