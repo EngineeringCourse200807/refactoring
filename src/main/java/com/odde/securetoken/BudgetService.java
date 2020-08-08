@@ -22,11 +22,7 @@ public class BudgetService {
         //同一个月的数据
         List<Budget> all = repo.findAll();
         if (isSameMonth(startTime, endTime)) {
-            boolean noneMatch = all.stream().noneMatch(x -> isSameMonth(startTime, x.getDate()));
-            if (noneMatch) {
-                return 0;
-            }
-            Budget budget = all.stream().filter(x -> isSameMonth(startTime, x.getDate())).findFirst().get();
+            Budget budget = findBudget(startTime, all);
             int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
             return dailyAmount * ((int) DAYS.between(startTime, endTime) + 1);
         }
@@ -73,18 +69,25 @@ public class BudgetService {
         return LocalDate.of(year, Month.DECEMBER, 31);
     }
 
-    private int getSingleBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
-        boolean anyMatch = budgets.stream().anyMatch(x -> isSameMonth(date, x.getDate()));
-        if (anyMatch) {
-            Budget budget = budgets.stream().filter(x -> isSameMonth(date, x.getDate())).findFirst().get();
-            int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-            if (endMonth) {
-                return dailyAmount * ((int) DAYS.between(date.withDayOfMonth(1), date) + 1);
-            } else {
-                return dailyAmount * ((int) DAYS.between(date, date.withDayOfMonth(date.lengthOfMonth())) + 1);
-            }
+    private Budget findBudget(LocalDate startTime, List<Budget> all) {
+        boolean noneMatch = all.stream().noneMatch(x -> isSameMonth(startTime, x.getDate()));
+        if (noneMatch) {
+            Budget budget = new Budget();
+            budget.setDate(startTime.withDayOfMonth(1));
+            budget.setAmount(0);
+            return budget;
         }
-        return 0;
+        return all.stream().filter(x -> isSameMonth(startTime, x.getDate())).findFirst().get();
+    }
+
+    private int getSingleBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
+        Budget budget = findBudget(date, budgets);
+        int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
+        if (endMonth) {
+            return dailyAmount * ((int) DAYS.between(date.withDayOfMonth(1), date) + 1);
+        } else {
+            return dailyAmount * ((int) DAYS.between(date, date.withDayOfMonth(date.lengthOfMonth())) + 1);
+        }
     }
 
     private boolean isSameMonth(LocalDate startTime, LocalDate endTime) {
