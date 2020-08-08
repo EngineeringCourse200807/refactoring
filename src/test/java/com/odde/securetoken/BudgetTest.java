@@ -2,11 +2,10 @@ package com.odde.securetoken;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
 import java.time.Month;
-import java.util.ArrayList;
-import java.util.List;
 
+import static java.time.LocalDate.of;
+import static java.time.Month.*;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -14,119 +13,117 @@ import static org.mockito.Mockito.when;
 
 public class BudgetTest {
 
-    BudgetService service = new BudgetService(new SubBudget());
+    BudgetRepo stubBudgetRepo = mock(BudgetRepo.class);
+    BudgetService budgetService = new BudgetService(stubBudgetRepo);
 
     @Test
-    public void sameMonthTest() {
-        int query = service.query(LocalDate.of(2020, Month.MAY, 3), LocalDate.of(2020, Month.MAY, 7));
-        assertEquals(50, query);
+    public void sameMonth() {
+        givenBudgets(budget(2020, MAY, 310));
+
+        int actual = budgetService.query(of(2020, MAY, 3), of(2020, MAY, 7));
+
+        assertEquals(50, actual);
     }
 
-
     @Test
-    public void differentMonthTest() {
-        int query = service.query(LocalDate.of(2020, Month.MAY, 3), LocalDate.of(2020, Month.JUNE, 7));
-        assertEquals(360, query);
+    public void twoMonths() {
+        givenBudgets(budget(2020, MAY, 310), budget(2020, JUNE, 300));
+
+        int actual = budgetService.query(of(2020, MAY, 3), of(2020, JUNE, 7));
+
+        assertEquals(290 + 70, actual);
     }
 
-
     @Test
-    public void differentYearTest() {
-        int query = service.query(LocalDate.of(2020, Month.MAY, 3), LocalDate.of(2021, Month.JUNE, 7));
-        assertEquals(1280, query);
+    public void twoYears() {
+        givenBudgets(
+                budget(2020, MAY, 310), budget(2020, JUNE, 300), budget(2020, JULY, 310),
+                budget(2021, MAY, 310), budget(2021, JUNE, 300));
+
+        int actual = budgetService.query(of(2020, MAY, 3), of(2021, JUNE, 7));
+
+        assertEquals(290 + 300 + 310 + 310 + 70, actual);
     }
 
     @Test
     public void sameDate() {
-        int query = service.query(LocalDate.of(2020, Month.MAY, 3), LocalDate.of(2020, Month.MAY, 3));
-        assertEquals(10, query);
-    }
+        givenBudgets(budget(2020, MAY, 310));
 
+        int actual = budgetService.query(of(2020, MAY, 3), of(2020, MAY, 3));
 
-    @Test
-    public void end_start_test() {
-        int query = service.query(LocalDate.of(2020, Month.MAY, 7), LocalDate.of(2020, Month.MAY, 3));
-        assertEquals(0, query);
+        assertEquals(10, actual);
     }
 
     @Test
-    public void test() {
-        int query = new BudgetService(new InnerBudget()).query(LocalDate.of(2020, Month.MAY, 10), LocalDate.of(2020, Month.OCTOBER, 10));
-        assertEquals(220, query);
+    public void start_is_after_end() {
+        givenBudgets(budget(2020, MAY, 310));
+
+        int actual = budgetService.query(of(2020, MAY, 7), of(2020, MAY, 3));
+
+        assertEquals(0, actual);
     }
 
     @Test
-    public void tes() {
-        int query = new BudgetService(new InnerBudget()).query(LocalDate.of(2020, Month.JUNE, 10), LocalDate.of(2020, Month.JUNE, 20));
-        assertEquals(0, query);
+    public void two_month_but_one_has_no_budget() {
+        givenBudgets(budget(2020, MAY, 310));
+
+        int actual = budgetService.query(of(2020, MAY, 10), of(2020, OCTOBER, 10));
+
+        assertEquals(220, actual);
     }
 
     @Test
-    public void te() {
-        int query = service.query(LocalDate.of(2020, Month.APRIL, 15), LocalDate.of(2020, Month.MAY, 20));
-        assertEquals(200, query);
+    public void no_budget() {
+        int actual = budgetService.query(of(2020, JUNE, 10), of(2020, JUNE, 20));
+
+        assertEquals(0, actual);
     }
 
-
     @Test
-    public void t() {
-        int query = service.query(LocalDate.of(2020, Month.JULY, 15), LocalDate.of(2020, Month.AUGUST, 15));
-        assertEquals(170, query);
+    public void two_month_but_first_has_no_budget() {
+        givenBudgets(budget(2020, MAY, 310));
+
+        int actual = budgetService.query(of(2020, APRIL, 15), of(2020, MAY, 20));
+
+        assertEquals(200, actual);
     }
 
+    @Test
+    public void two_month_but_second_has_no_budget() {
+        givenBudgets(budget(2020, JULY, 310));
+
+        int actual = budgetService.query(of(2020, JULY, 15), of(2020, AUGUST, 15));
+
+        assertEquals(170, actual);
+    }
 
     @Test
-    public void yt() {
-        int query = new BudgetService(new InnBudget()).query(LocalDate.of(2020, Month.MAY, 10), LocalDate.of(2020, Month.JULY, 10));
-        assertEquals(230, query);
+    public void three_month_but_middle_has_no_budget() {
+        givenBudgets(budget(2020, MAY, 310), budget(2020, JULY, 31));
+
+        int actual = budgetService.query(of(2020, MAY, 10), of(2020, JULY, 10));
+
+        assertEquals(230, actual);
     }
 
     @Test
     public void three_years() {
-        BudgetRepo stubBudgetRepo = mock(BudgetRepo.class);
-        BudgetService budgetService = new BudgetService(stubBudgetRepo);
-        when(stubBudgetRepo.findAll()).thenReturn(asList(new Budget(LocalDate.of(2020, Month.MAY, 1), 310), new Budget(LocalDate.of(2021, Month.MAY, 1), 310), new Budget(LocalDate.of(2022, Month.MAY, 1), 310)));
+        givenBudgets(budget(2020, MAY, 310), budget(2021, JULY, 31), budget(2022, APRIL, 300));
 
-        int actual = budgetService.query(LocalDate.of(2020, Month.MAY, 10), LocalDate.of(2022, Month.MAY, 10));
+        int actual = budgetService.query(of(2020, MAY, 10), of(2022, APRIL, 10));
 
-        assertEquals(220 + 310 + 100, actual);
+        assertEquals(220 + 31 + 100, actual);
     }
 
-
-    class SubBudget implements BudgetRepo {
-        @Override
-        public List<Budget> findAll() {
-            List<Budget> list = new ArrayList<>();
-            list.add(new Budget(LocalDate.of(2020, Month.MAY, 1), 310));
-            list.add(new Budget(LocalDate.of(2020, Month.JUNE, 1), 300));
-            list.add(new Budget(LocalDate.of(2020, Month.JULY, 1), 310));
-            list.add(new Budget(LocalDate.of(2021, Month.MAY, 1), 310));
-            list.add(new Budget(LocalDate.of(2021, Month.JUNE, 1), 300));
-            list.add(new Budget(LocalDate.of(2021, Month.JULY, 1), 310));
-
-            return list;
-        }
+    private Budget budget(int year, Month month, int amount) {
+        return new Budget() {{
+            setDate(of(year, month, 1));
+            setAmount(amount);
+        }};
     }
 
-    class InnerBudget implements BudgetRepo {
-        @Override
-        public List<Budget> findAll() {
-            List<Budget> list = new ArrayList<>();
-            list.add(new Budget(LocalDate.of(2020, Month.MAY, 1), 310));
-            return list;
-        }
-    }
-
-
-    class InnBudget implements BudgetRepo {
-        @Override
-        public List<Budget> findAll() {
-            List<Budget> list = new ArrayList<>();
-            list.add(new Budget(LocalDate.of(2020, Month.MAY, 1), 310));
-            list.add(new Budget(LocalDate.of(2020, Month.JULY, 1), 31));
-
-            return list;
-        }
+    private void givenBudgets(Budget... budgets) {
+        when(stubBudgetRepo.findAll()).thenReturn(asList(budgets));
     }
 
 }
