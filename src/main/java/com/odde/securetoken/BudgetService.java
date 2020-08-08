@@ -31,25 +31,19 @@ public class BudgetService {
             return dailyAmount * ((int) DAYS.between(startTime, endTime) + 1);
         }
         //不是同一个月的 但是是同一年的
-        int budget = 0;
-        budget = calBudgetMonth(startTime, endTime, all, budget);
+        int budget = calBudgetMonth(startTime, endTime, all, 0);
         if (budget != 0) {
             return budget;
         }
         //不同年份的
         for (int i = startTime.getYear(); i < endTime.getYear() + 1; i++) {
             int amount = 0;
-            LocalDate date;
             if (i == startTime.getYear()) {
-                LocalDate endDate = LocalDate.of(startTime.getYear(), Month.DECEMBER, 31);
-                budget += calBudgetMonth(startTime, endDate, all, amount);
+                budget += calBudgetMonth(startTime, endOfYear(startTime.getYear()), all, amount);
             } else if (i == endTime.getYear()) {
-                LocalDate startDate = LocalDate.of(endTime.getYear(), Month.JANUARY, 1);
-                budget += calBudgetMonth(startDate, endTime, all, amount);
+                budget += calBudgetMonth(startOfYear(endTime.getYear()), endTime, all, amount);
             } else {
-                LocalDate startDate = LocalDate.of(i, Month.JANUARY, 1);
-                LocalDate endDate = LocalDate.of(i, Month.DECEMBER, 31);
-                budget += calBudgetMonth(startDate, endDate, all, amount);
+                budget += calBudgetMonth(startOfYear(i), endOfYear(i), all, amount);
             }
         }
         return budget;
@@ -77,6 +71,10 @@ public class BudgetService {
         return budget;
     }
 
+    private LocalDate endOfYear(int year) {
+        return LocalDate.of(year, Month.DECEMBER, 31);
+    }
+
     private int getSignalBudget(LocalDate date, List<Budget> budgets, boolean endMonth) {
         boolean anyMatch = budgets.stream().anyMatch(x -> isSameMonth(date, x.getDate()));
         if (anyMatch) {
@@ -98,5 +96,9 @@ public class BudgetService {
 
     private boolean isSameMonth(LocalDate startTime, LocalDate endTime) {
         return YearMonth.from(startTime).equals(YearMonth.from(endTime));
+    }
+
+    private LocalDate startOfYear(int year) {
+        return LocalDate.of(year, Month.JANUARY, 1);
     }
 }
