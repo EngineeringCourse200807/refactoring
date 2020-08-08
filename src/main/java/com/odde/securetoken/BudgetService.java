@@ -22,9 +22,7 @@ public class BudgetService {
         //同一个月的数据
         List<Budget> all = repo.findAll();
         if (isSameMonth(startTime, endTime)) {
-            Budget budget = findBudget(startTime, all);
-            int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-            return dailyAmount * ((int) DAYS.between(startTime, endTime) + 1);
+            return getBudgetOfPeriod(startTime, endTime, all);
         }
         //不是同一个月的 但是是同一年的
         int budget = calBudgetMonth(startTime, endTime, all, 0);
@@ -49,17 +47,11 @@ public class BudgetService {
         if (startTime.getYear() == endTime.getYear()) {
             for (LocalDate current = startTime; current.isBefore(endTime) || current.isEqual(endTime); current = current.plusMonths(1)) {
                 if (current.getMonthValue() == startTime.getMonthValue()) {
-                    Budget budget = findBudget(startTime, all);
-                    int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-                    total += dailyAmount * ((int) DAYS.between(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth())) + 1);
+                    total += getBudgetOfPeriod(startTime, startTime.withDayOfMonth(startTime.lengthOfMonth()), all);
                 } else if (current.getMonthValue() == endTime.getMonthValue()) {
-                    Budget budget = findBudget(endTime, all);
-                    int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-                    total += dailyAmount * ((int) DAYS.between(endTime.withDayOfMonth(1), endTime) + 1);
+                    total += getBudgetOfPeriod(endTime.withDayOfMonth(1), endTime, all);
                 } else {
-                    Budget budget = findBudget(current.withDayOfMonth(1), all);
-                    int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
-                    total += dailyAmount * ((int) DAYS.between(current.withDayOfMonth(1), current.withDayOfMonth(1).withDayOfMonth(current.withDayOfMonth(1).lengthOfMonth())) + 1);
+                    total += getBudgetOfPeriod(current.withDayOfMonth(1), current.withDayOfMonth(current.lengthOfMonth()), all);
                 }
             }
         }
@@ -79,6 +71,12 @@ public class BudgetService {
             return budget;
         }
         return all.stream().filter(x -> isSameMonth(startTime, x.getDate())).findFirst().get();
+    }
+
+    private int getBudgetOfPeriod(LocalDate startTime, LocalDate endTime, List<Budget> all) {
+        Budget budget = findBudget(startTime, all);
+        int dailyAmount = budget.getAmount() / budget.getDate().lengthOfMonth();
+        return dailyAmount * ((int) DAYS.between(startTime, endTime) + 1);
     }
 
     private boolean isSameMonth(LocalDate startTime, LocalDate endTime) {
